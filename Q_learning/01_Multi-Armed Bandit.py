@@ -122,3 +122,6 @@ plt.xlabel("Step (t)")
 plt.ylabel("Probability P")
 plt.legend(loc = "lower right")
 plt.show()
+
+# Ref
+# http://incompleteideas.net/book/RLbook2018trimmed.pdf
