@@ -30,6 +30,7 @@ htmlcov/
 .idea/
 *.swp
 *.swo
+tempCodeRunnerFile.py
 
 # OS
 .DS_Store
