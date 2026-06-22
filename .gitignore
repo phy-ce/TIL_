@@ -51,6 +51,10 @@ desktop.ini
 # Local troubleshooting notes (not committed)
 Pytorch/torchaudio-ffmpeg-windows.md
 
+# Image_Processing color analysis (input images + generated palettes)
+Image_Processing/color_analysis/target/
+Image_Processing/color_analysis/output/
+
 # Model artifacts / large data (uncomment if needed)
 # *.pt
 # *.pth
