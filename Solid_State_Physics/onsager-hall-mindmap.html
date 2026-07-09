@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Onsager Reciprocity — Thermoelectric &harr; Hall · Mind Map</title>
+<style>
+  :root{
+    --bg:#eef1f6; --panel:#ffffff; --panel2:#f5f7fb;
+    --ink:#151d29; --muted:#5c6675; --line:#d3d9e4; --wire:#b9c1cf;
+    --thermo:#bf6a24; --thermo-soft:#f6e6d5;
+    --hall:#4d5bc0;   --hall-soft:#e2e5f7;
+    --hub:#141c2b; --hub-ink:#f4f6fb; --gold:#d8a43a; --nlhe:#b23a8e; --ahe:#2f8f6a;
+    --shadow:0 1px 2px rgba(20,28,43,.06),0 5px 14px rgba(20,28,43,.06);
+    --font-sans:"Segoe UI",system-ui,-apple-system,sans-serif;
+    --font-serif:"Palatino Linotype","Iowan Old Style",Palatino,Georgia,serif;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --bg:#0b1019; --panel:#141c29; --panel2:#0f1622;
+      --ink:#e8edf5; --muted:#93a0b4; --line:#243043; --wire:#3a4860;
+      --thermo:#e08a3e; --thermo-soft:#39280f; --hall:#8290ee; --hall-soft:#1b2140;
+      --hub:#0a1220; --hub-ink:#f4f6fb; --gold:#e6b954; --nlhe:#e06bc0; --ahe:#4bc196;
+      --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 22px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="light"]{
+    --bg:#eef1f6; --panel:#ffffff; --panel2:#f5f7fb; --ink:#151d29; --muted:#5c6675;
+    --line:#d3d9e4; --wire:#b9c1cf; --thermo:#bf6a24; --thermo-soft:#f6e6d5;
+    --hall:#4d5bc0; --hall-soft:#e2e5f7; --hub:#141c2b; --hub-ink:#f4f6fb; --gold:#d8a43a; --nlhe:#b23a8e; --ahe:#2f8f6a;
+    --shadow:0 1px 2px rgba(20,28,43,.06),0 5px 14px rgba(20,28,43,.06);
+  }
+  :root[data-theme="dark"]{
+    --bg:#0b1019; --panel:#141c29; --panel2:#0f1622; --ink:#e8edf5; --muted:#93a0b4;
+    --line:#243043; --wire:#3a4860; --thermo:#e08a3e; --thermo-soft:#39280f;
+    --hall:#8290ee; --hall-soft:#1b2140; --hub:#0a1220; --hub-ink:#f4f6fb; --gold:#e6b954; --nlhe:#e06bc0; --ahe:#4bc196;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 22px rgba(0,0,0,.35);
+  }
+
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-sans);
+    -webkit-font-smoothing:antialiased;line-height:1.45;overflow:hidden;display:flex;flex-direction:column}
+
+  /* ---- top bar ---- */
+  .topbar{flex:none;display:flex;align-items:center;flex-wrap:wrap;gap:10px 22px;
+    padding:12px 22px;border-bottom:1px solid var(--line);background:var(--panel)}
+  .brand{display:flex;flex-direction:column;gap:2px;margin-right:auto}
+  .brand .eyebrow{font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);font-weight:600}
+  .brand h1{font-family:var(--font-serif);font-weight:600;font-size:19px;margin:0;letter-spacing:-.01em}
+  .legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12.5px}
+  .legend span{display:inline-flex;align-items:center;gap:7px;color:var(--muted)}
+  .dot{width:10px;height:10px;border-radius:50%;flex:none}
+  .dot.t{background:var(--thermo)} .dot.h{background:var(--hall)}
+  .zoom{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted)}
+  .zoom .hint{margin-right:2px}
+  .zoom button{width:28px;height:28px;border:1px solid var(--line);background:var(--panel2);color:var(--ink);
+    border-radius:8px;font-size:15px;cursor:pointer;line-height:1;box-shadow:var(--shadow)}
+  .zoom button:hover{border-color:var(--muted)}
+  .zoom button:focus-visible{outline:2px solid var(--hall);outline-offset:2px}
+  .zoom .lvl{min-width:42px;text-align:center;font-variant-numeric:tabular-nums}
+
+  /* ---- full-bleed canvas ---- */
+  .viewport{flex:1;position:relative;overflow:hidden;cursor:grab;touch-action:none;
+    background:radial-gradient(circle at 1px 1px, var(--line) 1px, transparent 0) 0 0/26px 26px;}
+  .viewport.grabbing{cursor:grabbing}
+  .zoomable{position:absolute;top:0;left:0;transform-origin:0 0;user-select:none;will-change:transform}
+  .map{position:relative;display:inline-block;padding:40px}
+  .wires{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1}
+  .wires path{fill:none;stroke-width:2;stroke-linecap:round}
+  .conn-thermo{stroke:var(--thermo);opacity:.9} .conn-hall{stroke:var(--hall);opacity:.9}
+  .conn-nlhe{stroke:var(--nlhe);opacity:.95;stroke-width:3}
+  .conn-ahe{stroke:var(--ahe);opacity:.95;stroke-width:2.8}
+
+  /* ---- tree layout ---- */
+  .tree{position:relative;z-index:2;display:flex;align-items:center;justify-content:center;gap:clamp(30px,4vw,58px)}
+  .branch{display:flex;align-items:center;gap:clamp(28px,3.4vw,56px)}
+  .subtrees{display:flex;flex-direction:column;gap:clamp(14px,1.8vw,22px)}
+  .branch.left .subtrees{align-items:flex-end}
+  .branch.right .subtrees{align-items:flex-start}
+  .subtree{display:flex;align-items:center;gap:clamp(24px,2.8vw,46px)}
+  .leafcol{display:flex;flex-direction:column;gap:clamp(11px,1.4vw,17px)}
+  .branch.left .leafcol{align-items:flex-end}
+  .branch.right .leafcol{align-items:flex-start}
+
+  /* ---- nodes ---- */
+  .node{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 13px;
+    box-shadow:var(--shadow);width:max-content;max-width:236px;opacity:0;
+    animation:rise .45s ease forwards;animation-delay:var(--d,0s)}
+  .kick{font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;font-weight:700;margin:0 0 4px;color:var(--muted)}
+  .name{font-weight:600;font-size:14.5px;margin:0;letter-spacing:-.005em}
+  .desc{margin:4px 0 0;font-size:12px;color:var(--muted);line-height:1.4}
+  .desc.dim{color:var(--ink)}
+  .eq{font-family:var(--font-serif);font-style:italic}
+  .eq sub{font-style:normal}
+  .big{font-size:16px}
+
+  .node.thermo .kick{color:var(--thermo)} .node.hall .kick{color:var(--hall)}
+  .node.thermo{border-color:color-mix(in srgb,var(--thermo) 35%,var(--line))}
+  .node.hall{border-color:color-mix(in srgb,var(--hall) 35%,var(--line))}
+
+  .head{padding:13px 16px;max-width:220px;text-align:center;border-width:1.5px}
+  .head .name{font-size:16px}
+  .head.thermo{border-color:var(--thermo);background:linear-gradient(180deg,var(--thermo-soft),var(--panel) 74%)}
+  .head.hall{border-color:var(--hall);background:linear-gradient(180deg,var(--hall-soft),var(--panel) 74%)}
+
+  .node.emph{border:1.6px solid var(--nlhe);max-width:256px;
+    background:linear-gradient(180deg,color-mix(in srgb,var(--nlhe) 13%,var(--panel)),var(--panel) 82%);
+    box-shadow:0 0 0 3px color-mix(in srgb,var(--nlhe) 20%,transparent),var(--shadow)}
+  .node.emph .kick{color:var(--nlhe)}
+  .node.emph .name{color:var(--nlhe)}
+  .badge{display:inline-block;margin-top:7px;font-size:9px;font-weight:700;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--nlhe);border:1px solid var(--nlhe);border-radius:6px;padding:2px 6px}
+  .node.ahe{border:1.5px solid var(--ahe);max-width:256px;
+    background:linear-gradient(180deg,color-mix(in srgb,var(--ahe) 12%,var(--panel)),var(--panel) 82%)}
+  .node.ahe .kick,.node.ahe .name{color:var(--ahe)}
+  .badge.ahe{color:var(--ahe);border-color:var(--ahe)}
+  .node.rule{border:1.5px solid var(--gold);max-width:252px;
+    background:linear-gradient(180deg,color-mix(in srgb,var(--gold) 12%,var(--panel)),var(--panel) 84%)}
+
+  .hub{background:radial-gradient(120% 150% at 50% 0%,#26374d 0%,var(--hub) 72%);color:var(--hub-ink);
+    border:1.5px solid var(--gold);border-radius:16px;padding:17px 20px;text-align:center;max-width:230px;
+    box-shadow:0 10px 28px rgba(10,16,28,.30);opacity:0;animation:rise .45s ease forwards}
+  .hub .kick{color:var(--gold);letter-spacing:.16em}
+  .hub .name{font-family:var(--font-serif);font-size:19px;color:var(--hub-ink)}
+  .hub .eq{color:#dfe6f2;font-size:14px;display:block;margin-top:6px}
+  .hub .desc{color:#9fb0c6}
+
+  @keyframes rise{to{opacity:1}}
+  @media (prefers-reduced-motion:reduce){
+    .node,.hub{animation:none;opacity:1}
+    .wires path{stroke-dasharray:none!important;stroke-dashoffset:0!important}
+  }
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="brand">
+      <span class="eyebrow">Solid State Physics · Linear Response</span>
+      <h1>Onsager Reciprocity: Thermoelectric &harr; Hall</h1>
+    </div>
+    <div class="legend">
+      <span><i class="dot t"></i>Left branch — B = 0 (thermoelectric)</span>
+      <span><i class="dot h"></i>Right branch — B &ne; 0 (in a field)</span>
+      <span><i class="dot" style="background:var(--nlhe)"></i>Nonlinear Hall — beyond linear reciprocity (breaks P)</span>
+      <span><i class="dot" style="background:var(--ahe)"></i>Anomalous Hall — same law with M (breaks T)</span>
+    </div>
+    <div class="zoom">
+      <span class="hint">Scroll to zoom · drag to pan</span>
+      <button id="zout" aria-label="Zoom out">&minus;</button>
+      <span class="lvl" id="zlvl">100%</span>
+      <button id="zin" aria-label="Zoom in">+</button>
+    </div>
+  </div>
+
+  <div class="viewport" id="viewport">
+   <div class="zoomable" id="zoomable">
+    <div class="map" id="map">
+      <svg class="wires" id="wires" preserveAspectRatio="none"></svg>
+      <div class="tree">
+
+        <!-- ================= LEFT branch : B = 0 ================= -->
+        <div class="branch left">
+          <div class="subtrees">
+
+            <!-- reciprocity (leaf) -->
+            <div class="subtree">
+              <div class="node thermo" id="L-rec" data-parent="L0" data-branch="thermo">
+                <p class="kick">Reciprocity</p>
+                <p class="name eq big">L<sub>eq</sub>(0) = L<sub>qe</sub>(0)</p>
+                <p class="desc">Charge&ndash;heat cross coeffs equal</p>
+              </div>
+            </div>
+
+            <!-- tensor -> sym / antisym -->
+            <div class="subtree">
+              <div class="leafcol">
+                <div class="node thermo" id="L-sym" data-parent="L-ten" data-branch="thermo">
+                  <p class="kick">Symmetric · even in B</p>
+                  <p class="name eq big">&rho;<sub>xx</sub>(0)</p>
+                  <p class="desc">Ordinary (Ohmic) resistivity</p>
+                </div>
+                <div class="subtree">
+                  <div class="subtree">
+                    <div class="leafcol">
+                    <div class="node emph" id="L-nlhe" data-parent="L-thm" data-branch="nlhe">
+                      <p class="kick">Breaks (1) · nonlinear</p>
+                      <p class="name">Nonlinear Hall Effect</p>
+                      <p class="desc dim">Strong drive &rarr; 2nd-order response <span class="eq">j &prop; E&sup2;</span>, outside the theorem &mdash; a transverse Hall signal at <b>B = 0</b>, time reversal still intact. Needs broken inversion symmetry (Berry-curvature dipole).</p>
+                      <span class="badge">non-reciprocal · B = 0</span>
+                    </div>
+                    <div class="node ahe" id="L-ahe" data-parent="L-thm" data-branch="ahe">
+                      <p class="kick">Breaks (2) · time reversal</p>
+                      <p class="name">Anomalous Hall Effect</p>
+                      <p class="desc dim">A spontaneous magnetization <span class="eq">M</span> is time-odd, so the same law reads <span class="eq">&rho;<sub>xy</sub>(M) = &minus;&rho;<sub>xy</sub>(&minus;M)</span> &mdash; odd in M, nonzero at <b>B = 0</b>. Still linear; only T&#8209;symmetry is broken. Origin: Berry curvature of the bands.</p>
+                      <span class="badge ahe">linear · broken-T · B = 0</span>
+                    </div>
+                    </div>
+                    <div class="node rule" id="L-thm" data-parent="L-anti" data-branch="thermo">
+                      <p class="kick">The rule behind the zero</p>
+                      <p class="name">Linear Onsager theorem</p>
+                      <p class="desc dim"><span class="eq">J<sub>i</sub> = &Sigma; L<sub>ij</sub>X<sub>j</sub></span> with <span class="eq">L<sub>ij</sub> = &epsilon;<sub>i</sub>&epsilon;<sub>j</sub>L<sub>ji</sub></span> (from fluctuation&ndash;dissipation). Holds only if <b>(1)</b> response is linear in the drive and <b>(2)</b> dynamics is time-reversal invariant (B, M flipped). Break either &rarr; <span class="eq">&rho;<sub>xy</sub>(0)</span> need not vanish:</p>
+                    </div>
+                  </div>
+                  <div class="node thermo" id="L-anti" data-parent="L-ten" data-branch="thermo">
+                    <p class="kick">Antisymmetric · odd in B</p>
+                    <p class="name eq big">&rho;<sub>xy</sub>(0) = &minus;&rho;<sub>xy</sub>(0) = 0</p>
+                    <p class="desc dim">Linear response: forced to zero &rarr; no Hall without a field</p>
+                  </div>
+                </div>
+              </div>
+              <div class="node thermo" id="L-ten" data-parent="L0" data-branch="thermo">
+                <p class="kick">Transport tensor</p>
+                <p class="name eq big">&rho;<sub>ij</sub>(0) = &rho;<sub>ji</sub>(0)</p>
+                <p class="desc">Symmetric at B = 0</p>
+              </div>
+            </div>
+
+            <!-- effects -> pair / identity -->
+            <div class="subtree">
+              <div class="leafcol">
+                <div class="node thermo" id="L-pair" data-parent="L-eff" data-branch="thermo">
+                  <p class="kick">Reciprocal pair</p>
+                  <p class="name">Seebeck &rlarr; Peltier</p>
+                  <p class="desc eq">&nabla;T &rarr; V &nbsp;·&nbsp; I &rarr; J<sub>q</sub></p>
+                </div>
+                <div class="node thermo" id="L-id" data-parent="L-eff" data-branch="thermo">
+                  <p class="kick">Identity</p>
+                  <p class="name eq big">&Pi; = T &middot; S</p>
+                  <p class="desc">Kelvin (Thomson) relation</p>
+                </div>
+              </div>
+              <div class="node thermo" id="L-eff" data-parent="L0" data-branch="thermo">
+                <p class="kick">Reciprocal effects</p>
+                <p class="name">Pair &rarr; identity</p>
+              </div>
+            </div>
+
+          </div>
+          <div class="node head thermo" id="L0" data-parent="hub" data-branch="thermo">
+            <p class="kick">B = 0</p>
+            <p class="name">Thermoelectric</p>
+            <p class="desc">Field-odd knob set to 0</p>
+          </div>
+        </div>
+
+        <!-- ================= CENTER : master law ================= -->
+        <div class="hub" id="hub">
+          <p class="kick">Master law · time reversal</p>
+          <p class="name">Onsager Reciprocity</p>
+          <span class="eq">L<sub>ij</sub>(B,M) = &epsilon;<sub>i</sub>&epsilon;<sub>j</sub> L<sub>ji</sub>(&minus;B,&minus;M)</span>
+          <p class="desc">B, M are time-odd — both flip</p>
+        </div>
+
+        <!-- ================= RIGHT branch : B ≠ 0 ================= -->
+        <div class="branch right">
+          <div class="node head hall" id="R0" data-parent="hub" data-branch="hall">
+            <p class="kick">B &ne; 0</p>
+            <p class="name">In a magnetic field</p>
+            <p class="desc">Field breaks time reversal</p>
+          </div>
+          <div class="subtrees">
+
+            <!-- reciprocity (leaf) -->
+            <div class="subtree">
+              <div class="node hall" id="R-rec" data-parent="R0" data-branch="hall">
+                <p class="kick">Reciprocity · Casimir</p>
+                <p class="name eq big">L<sub>ij</sub>(B) = L<sub>ji</sub>(&minus;B)</p>
+                <p class="desc">Field reverses the indices</p>
+              </div>
+            </div>
+
+            <!-- tensor -> sym / antisym -->
+            <div class="subtree">
+              <div class="node hall" id="R-ten" data-parent="R0" data-branch="hall">
+                <p class="kick">Transport tensor</p>
+                <p class="name eq big">&rho;<sub>ij</sub>(B) = &rho;<sub>ji</sub>(&minus;B)</p>
+                <p class="desc">Symmetric under B &rarr; &minus;B</p>
+              </div>
+              <div class="leafcol">
+                <div class="node hall" id="R-sym" data-parent="R-ten" data-branch="hall">
+                  <p class="kick">Symmetric · even in B</p>
+                  <p class="name eq big">&rho;<sub>xx</sub>(B) = &rho;<sub>xx</sub>(&minus;B)</p>
+                  <p class="desc dim">Magnetoresistance</p>
+                </div>
+                <div class="node hall" id="R-anti" data-parent="R-ten" data-branch="hall">
+                  <p class="kick">Antisymmetric · odd in B</p>
+                  <p class="name eq big">&rho;<sub>xy</sub>(B) = &minus;&rho;<sub>xy</sub>(&minus;B)</p>
+                  <p class="desc dim">Hall resistivity &mdash; flips with the field</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- effects -> pair / identity -->
+            <div class="subtree">
+              <div class="node hall" id="R-eff" data-parent="R0" data-branch="hall">
+                <p class="kick">Reciprocal effects</p>
+                <p class="name">Pair &rarr; identity</p>
+              </div>
+              <div class="leafcol">
+                <div class="node hall" id="R-pair" data-parent="R-eff" data-branch="hall">
+                  <p class="kick">Reciprocal pair</p>
+                  <p class="name">Nernst &rlarr; Ettingshausen</p>
+                  <p class="desc">Transverse thermo-magnetic pair</p>
+                </div>
+                <div class="node hall" id="R-id" data-parent="R-eff" data-branch="hall">
+                  <p class="kick">Identity</p>
+                  <p class="name">Bridgman relation</p>
+                  <p class="desc">Links the two coefficients</p>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+   </div>
+  </div>
+
+<script>
+(function(){
+  var map=document.getElementById('map'), svg=document.getElementById('wires');
+  var vp=document.getElementById('viewport');
+  var reduce=window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+
+  function ctr(el,base,scale){
+    var r=el.getBoundingClientRect();
+    return {x:((r.left-base.left)+r.width/2)/scale, y:((r.top-base.top)+r.height/2)/scale};
+  }
+
+  var scale=1, tx=0, ty=0;
+  function draw(){
+    var base=map.getBoundingClientRect();
+    var W=base.width/scale, H=base.height/scale;
+    svg.setAttribute('viewBox','0 0 '+W+' '+H);
+    var nodes=map.querySelectorAll('[data-parent]'), paths='';
+    nodes.forEach(function(n){
+      var p=document.getElementById(n.getAttribute('data-parent'));
+      if(!p) return;
+      var a=ctr(p,base,scale), b=ctr(n,base,scale);
+      var dx=b.x-a.x, dy=b.y-a.y, c1x,c1y,c2x,c2y;
+      if(Math.abs(dx)>=Math.abs(dy)){c1x=a.x+dx*0.5;c1y=a.y;c2x=b.x-dx*0.5;c2y=b.y;}
+      else{c1x=a.x;c1y=a.y+dy*0.5;c2x=b.x;c2y=b.y-dy*0.5;}
+      paths+='<path class="conn-'+n.getAttribute('data-branch')+'" d="M '+a.x+' '+a.y+' C '+c1x+' '+c1y+' '+c2x+' '+c2y+' '+b.x+' '+b.y+'"/>';
+    });
+    svg.innerHTML=paths;
+    if(!reduce){
+      svg.querySelectorAll('path').forEach(function(pt,i){
+        var len=pt.getTotalLength();
+        pt.style.strokeDasharray=len; pt.style.strokeDashoffset=len;
+        pt.style.transition='stroke-dashoffset .6s ease '+(0.1+i*0.025)+'s';
+        requestAnimationFrame(function(){requestAnimationFrame(function(){pt.style.strokeDashoffset=0;});});
+      });
+    }
+  }
+
+  map.querySelectorAll('.node,.hub').forEach(function(n,i){n.style.setProperty('--d',(i*0.025)+'s');});
+  [0,120,450,1000].forEach(function(ms){setTimeout(draw,ms);});
+  if(window.ResizeObserver){new ResizeObserver(draw).observe(map);}
+
+  // ---- pan & zoom (scroll = zoom, left-drag = pan) ----
+  var zoomable=document.getElementById('zoomable'), lvl=document.getElementById('zlvl');
+  var MIN=0.35, MAX=2.6;
+  function clamp(v){return Math.max(MIN,Math.min(MAX,v));}
+  function setTransform(){zoomable.style.transform='translate('+tx+'px,'+ty+'px) scale('+scale+')';}
+  function apply(){setTransform();lvl.textContent=Math.round(scale*100)+'%';}
+
+  function fitView(){
+    var cw=map.offsetWidth, ch=map.offsetHeight, vw=vp.clientWidth, vh=vp.clientHeight;
+    if(!cw||!ch) return;
+    scale=clamp(Math.min(vw/cw,vh/ch,1)*0.96);
+    tx=(vw-cw*scale)/2; ty=(vh-ch*scale)/2;
+    apply(); draw();
+  }
+  function zoomAt(px,py,factor){
+    var ns=clamp(scale*factor);
+    if(ns===scale) return;
+    tx=px-(px-tx)*(ns/scale);
+    ty=py-(py-ty)*(ns/scale);
+    scale=ns; apply();
+  }
+
+  vp.addEventListener('wheel',function(e){
+    e.preventDefault();
+    var r=vp.getBoundingClientRect();
+    zoomAt(e.clientX-r.left, e.clientY-r.top, e.deltaY<0?1.12:1/1.12);
+  },{passive:false});
+
+  var drag=false,sx=0,sy=0,ox=0,oy=0;
+  vp.addEventListener('mousedown',function(e){
+    if(e.button!==0) return;
+    drag=true; sx=e.clientX; sy=e.clientY; ox=tx; oy=ty;
+    vp.classList.add('grabbing'); e.preventDefault();
+  });
+  window.addEventListener('mousemove',function(e){
+    if(!drag) return;
+    tx=ox+(e.clientX-sx); ty=oy+(e.clientY-sy); setTransform();
+  });
+  window.addEventListener('mouseup',function(){ if(drag){drag=false; vp.classList.remove('grabbing');} });
+
+  document.getElementById('zin').addEventListener('click',function(){zoomAt(vp.clientWidth/2,vp.clientHeight/2,1.12);});
+  document.getElementById('zout').addEventListener('click',function(){zoomAt(vp.clientWidth/2,vp.clientHeight/2,1/1.12);});
+
+  window.addEventListener('load',fitView);
+  window.addEventListener('resize',fitView);
+  setTimeout(fitView,60);
+})();
+</script>
+</body>
+</html>
